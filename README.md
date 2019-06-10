@@ -3,6 +3,9 @@ A little program I made to print out subtitles from an SRT file line by line in 
 
 Usage:
 make file executable (chmod +x srtwait)
-./srtwait Filename
-Will output file line by line onto the command line. 
+
+./srtwait [-p] Filename
+Will output subtitles from file line by line onto the command line. 
+-p -- get all subtitle lines from file, output them onto the command line, then quit
+no options -- print out subtitles in real time by waiting (end timestamp - beginning timestamp) amount of time
 I might add a command-line option to clear everything before printing a new line.
