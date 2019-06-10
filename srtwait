@@ -16,15 +16,15 @@ shift $((OPTIND-1))
 
 check $@
 
+#turn the comma into a colon, so that I can use a colon as a field delimiter with awk
 paste <(grep ^..:.. $1 | sed 's/,/\:/g' |
 
 while read line
 do
-begstamp=$(grep -o ^..:..:..:... <(echo $line))
-begtime=$(echo $begstamp | awk -F: '{print ($1 * 3600 + $2 * 60 + $3 + $4 / 1000)}')
+#Get the timestamps and then convert the HH:MM:SS format into seconds.
+begtime=$(grep -o ^..:..:..:... <(echo $line) | awk -F: '{print ($1 * 3600 + $2 * 60 + $3 + $4 / 1000)}')
 
-endstamp=$(grep -o ..:..:..:...$ <(echo $line))
-endtime=$(echo $endstamp | awk -F: '{print ($1 * 3600 + $2 * 60 + $3 + $4 / 1000)}') 
+endtime=$(grep -o ..:..:..:...$ <(echo $line) | awk -F: '{print ($1 * 3600 + $2 * 60 + $3 + $4 / 1000)}') 
 
 wait=$(echo $endtime - $begtime | bc -l)
 
@@ -35,7 +35,7 @@ while read line
 do
 echo $line | awk -F' ' '{$1=""; print $0}'    
 
-time=$(echo $line | awk -F' ' '{print $1}')
+time=$(awk -F' ' '{print $1}' <(echo $line))
 sleep $time
 
 done
