@@ -5,8 +5,8 @@ local OPTIND opt i
 while getopts ":p:" opt; do
     case $opt in
         p)
-#print out the lines from the srt file with lyrics and exit
-            sed -n '/^..:..:..,... --> ..:..:..,...$/,/^$/{//!p}' $2
+#print out the subtitle lines and exit
+            sed -n '/^..:..:..,... --> ..:..:..,...$/,//{//!p}' $2
             exit 1
 ;;
     esac
@@ -16,29 +16,21 @@ shift $((OPTIND-1))
 
 check $@
 
-#turn the comma into a colon, so that I can use a colon as a field delimiter with awk
-paste <(grep ^..:.. $1 | sed 's/,/\:/g' |
+#turn the comma in the SRT timestamp lines into a colon, so that I can use a colon as a field delimiter with awk
+#paste prints out the length of each subtitle, a space, then the subtitle.
+paste <(sed 's/,/\:/g' <(grep ^..:.. $1) |
 
 while read line
 do
 #Get the timestamps and then convert the HH:MM:SS format into seconds.
-begtime=$(grep -o ^..:..:..:... <(echo $line) | awk -F: '{print ($1 * 3600 + $2 * 60 + $3 + $4 / 1000)}')
-
-endtime=$(grep -o ..:..:..:...$ <(echo $line) | awk -F: '{print ($1 * 3600 + $2 * 60 + $3 + $4 / 1000)}') 
-
-wait=$(echo $endtime - $begtime | bc -l)
-
-echo $wait
+begtime=$(awk -F: '{print ($1 * 3600 + $2 * 60 + $3 + $4 / 1000)}' <(grep -o ^..:..:..:... <(echo $line)) )
+endtime=$(awk -F: '{print ($1 * 3600 + $2 * 60 + $3 + $4 / 1000)}' <(grep -o ..:..:..:...$ <(echo $line)) ) 
+echo $endtime - $begtime | bc -l
 done) <(sed -n '/^..:..:..,... --> ..:..:..,...$/,/^$/{//!p}' $1) |
 
 while read line
 do
-echo $line | awk -F' ' '{$1=""; print $0}'    
-
+awk -F' ' '{$1=""; print $0}'  <(echo $line)
 time=$(awk -F' ' '{print $1}' <(echo $line))
 sleep $time
-
 done
-
-
- 
