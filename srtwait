@@ -6,7 +6,7 @@ while getopts ":p:" opt; do
     case $opt in
         p)
 #print out the subtitle lines and exit
-            sed -n '/^..:..:..,... --> ..:..:..,...$/,//{//!p}' $2
+            sed -n '/^..:..:..,... --> ..:..:..,...$/,/^$/{//!p}' $2
             exit 1
 ;;
     esac
