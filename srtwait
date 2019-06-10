@@ -1,0 +1,32 @@
+#!/bin/bash
+
+#get the start and end times of each subtitle;
+
+#turns commas into periods for use with AWK; not ideal, but it's a workaround that allows me to not use GNU dates.
+
+paste <(grep ^..:.. $1 | sed 's/,/\:/g' |
+
+while read line
+do
+begstamp=$(grep -o ^..:..:..:... <(echo $line))
+begtime=$(echo $begstamp | awk -F: '{print ($1 * 3600 + $2 * 60 + $3 + $4 / 1000)}')
+
+endstamp=$(grep -o ..:..:..:...$ <(echo $line))
+endtime=$(echo $endstamp | awk -F: '{print ($1 * 3600 + $2 * 60 + $3 + $4 / 1000)}') 
+
+wait=$(echo $endtime - $begtime | bc -l)
+
+echo $wait
+done) <(sed -n '/^..:..:..,... --> ..:..:..,...$/,/^$/{//!p}' $1) |
+
+while read line
+do
+echo $line | awk -F' ' '{$1=""; print $0}'    
+
+time=$(echo $line | awk -F' ' '{print $1}')
+sleep $time
+
+done
+
+
+ 
