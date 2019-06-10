@@ -1,8 +1,20 @@
 #!/bin/bash
 
-#get the start and end times of each subtitle;
+function check(){
+local OPTIND opt i
+while getopts ":p:" opt; do
+    case $opt in
+        p)
+#print out the lines from the srt file with lyrics and exit
+            sed -n '/^..:..:..,... --> ..:..:..,...$/,/^$/{//!p}' $2
+            exit 1
+;;
+    esac
+done
+shift $((OPTIND-1))
+}
 
-#turns commas into periods for use with AWK; not ideal, but it's a workaround that allows me to not use GNU dates.
+check $@
 
 paste <(grep ^..:.. $1 | sed 's/,/\:/g' |
 
