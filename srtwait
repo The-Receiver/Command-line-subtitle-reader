@@ -1,12 +1,16 @@
 #!/bin/bash
 
+function print {
+sed '1~2d' <(awk -v RS= '{gsub(/\n/, " ")}1' <(sed 's/..:..:..,... --> ..:..:..,...//' $1) )
+}
+
 function check(){
 local OPTIND opt i
 while getopts ":p:" opt; do
     case $opt in
         p)
 #print out the subtitle lines and exit
-            sed -n '/^..:..:..,... --> ..:..:..,...$/,/^$/{//!p}' $2
+            print $2
             exit 1
 ;;
     esac
@@ -14,20 +18,39 @@ done
 shift $((OPTIND-1))
 }
 
+#Turn the given HHMMSSMilliseconds format into seconds
+function getseconds {
+awk -F: '{print ($1 * 3600 + $2 * 60 + $3 + $4 / 1000)}' <(grep -o $1 <(echo $line) )
+}
+
+function gettimestamps {
+sed 's/,/\:/g' <(sed -n '/^..:..:..,... --> ..:..:..,...$/p' $1) 
+}
+
+function getfirsttime {
+#like gettimestamps, but only gets the first timestamp
+grep -o -m1 ^..:..:..:... <(gettimestamps $1) | awk -F: '{print ($1 * 3600 + $2 * 60 + $3 + $4 / 1000)}'
+}
+
 check $@
 
-#turn the comma in the SRT timestamp lines into a colon, so that I can use a colon as a field delimiter with awk
-#paste prints out the length of each subtitle, a space, then the subtitle.
-paste <(sed 's/,/\:/g' <(grep ^..:.. $1) |
+#waits until the first timestamp
+firsttime=$(getfirsttime $1)
+# getfirsttime $1 will show the amount of seconds to wait
+sleep $firsttime
+
+paste <(gettimestamps $1 |
 
 while read line
 do
-#Get the timestamps and then convert the HH:MM:SS format into seconds.
-begtime=$(awk -F: '{print ($1 * 3600 + $2 * 60 + $3 + $4 / 1000)}' <(grep -o ^..:..:..:... <(echo $line)) )
-endtime=$(awk -F: '{print ($1 * 3600 + $2 * 60 + $3 + $4 / 1000)}' <(grep -o ..:..:..:...$ <(echo $line)) ) 
+#Get the timestamps and then convert the HH:MM:SS:Milliseconds format into seconds.
+begtime=$(getseconds ^..:..:..:...)
+endtime=$(getseconds ..:..:..:...$) 
+#Calculate the length of time to display that particular line
 echo $endtime - $begtime | bc -l
-done) <(sed -n '/^..:..:..,... --> ..:..:..,...$/,/^$/{//!p}' $1) |
+done) <(print $1) |
 
+#Loop through each lines, and display the subtitle line, then wait an amount of time equal to the number at the beginning of the line
 while read line
 do
 awk -F' ' '{$1=""; print $0}'  <(echo $line)
