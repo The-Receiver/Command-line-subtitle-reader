@@ -6,13 +6,19 @@ sed '1~2d' <(awk -v RS= '{gsub(/\n/, " ")}1' <(sed 's/..:..:..,... --> ..:..:..,
 
 function check(){
 local OPTIND opt i
-while getopts ":p:" opt; do
+while getopts ":p:t:" opt; do
     case $opt in
         p)
 #print out the subtitle lines and exit
             print $2
             exit 1
 ;;
+        t) 
+            beg=$(getfirsttime $2)
+            end=$(getlasttime $2)
+            echo $end - $beg | bc -l
+            exit 1
+            
     esac
 done
 shift $((OPTIND-1))
@@ -32,6 +38,11 @@ function getfirsttime {
 grep -o -m1 ^..:..:..:... <(gettimestamps $1) | awk -F: '{print ($1 * 3600 + $2 * 60 + $3 + $4 / 1000)}'
 }
 
+function getlasttime {
+#like gettimestamps, but only gets the first timestamp
+grep -o ^..:..:..:... <(gettimestamps $1) | awk -F: '{print ($1 * 3600 + $2 * 60 + $3 + $4 / 1000)}' | tail -1
+}
+
 check $@
 
 #waits until the first timestamp
@@ -40,7 +51,6 @@ firsttime=$(getfirsttime $1)
 sleep $firsttime
 
 paste <(gettimestamps $1 |
-
 while read line
 do
 #Get the timestamps and then convert the HH:MM:SS:Milliseconds format into seconds.
@@ -49,7 +59,6 @@ endtime=$(getseconds ..:..:..:...$)
 #Calculate the length of time to display that particular line
 echo $endtime - $begtime | bc -l
 done) <(print $1) |
-
 #Loop through each lines, and display the subtitle line, then wait an amount of time equal to the number at the beginning of the line
 while read line
 do
