@@ -8,6 +8,7 @@ make file executable (chmod +x srtwait)
 Will output subtitles from file line by line onto the command line. 
 
 -p -- get all subtitle lines from file, output them onto the command line, then quit
+-t -- print the time difference between the first timestamp and the last timestamp in seconds, then quit
 
 no options -- print out subtitles in real time by waiting (end timestamp - beginning timestamp) amount of time
 
